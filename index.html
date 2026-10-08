@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#16110c">
+<title>錢櫃點鈔小結</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --c-2000:#7b53b6; --c-1000:#2f6fb0; --c-500:#9a6b3d; --c-200:#3f9163; --c-100:#c2453f;
+    --c-50:#caa12e; --c-10:#9aa6ad; --c-5:#aeb7bd; --c-1:#c0a98c;
+    --bg:#16110c; --panel:#211a12; --panel-2:#2b2218; --line:#3a2f21;
+    --ink:#f4ece0; --ink-soft:#b6a890; --gold:#e8c879; --radius:13px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+  html,body{height:100%;background:var(--bg);overflow:hidden;}
+  body{
+    font-family:"Noto Sans TC",system-ui,sans-serif;color:var(--ink);
+    height:100dvh;display:flex;flex-direction:column;
+    padding:0 9px calc(env(safe-area-inset-bottom));
+    -webkit-text-size-adjust:100%;
+  }
+  .num{font-family:"Space Grotesk","Noto Sans TC",sans-serif;font-variant-numeric:tabular-nums;}
+
+  /* ── 總計（最上）── */
+  .total{
+    flex:none;margin:0 -9px;padding:11px 16px 10px;
+    background:linear-gradient(180deg,#1d1610,#16110c);border-bottom:1px solid var(--line);
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  .total .amount{font-size:clamp(30px,9.5vw,46px);font-weight:700;line-height:1;
+    color:var(--ink);display:flex;align-items:baseline;gap:7px;}
+  .total .amount .cur{font-size:.4em;color:var(--gold);font-weight:700;letter-spacing:.06em;}
+  .total .amount.pulse{animation:pulse .35s ease;}
+  @keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.03)}100%{transform:scale(1)}}
+  .breakdown{font-size:12px;color:var(--ink-soft);text-align:right;line-height:1.5;}
+  .breakdown b{color:var(--ink);font-weight:700;}
+
+  /* ── 列表區：撐滿剩餘高度、九格均分 ── */
+  .list{flex:1;display:flex;flex-direction:column;padding:6px 0;min-height:0;}
+  .divider{height:1px;background:var(--line);margin:3px 6px;flex:none;opacity:.7;}
+
+  .row{
+    flex:1;min-height:44px;display:flex;align-items:center;gap:8px;
+    background:var(--panel);border:1px solid var(--line);
+    border-left:5px solid var(--accent,#666);border-radius:var(--radius);
+    padding:0 10px;margin:3px 0;
+  }
+  /* 左半：放大的面額 + 小計 */
+  .denom{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0;}
+  .chip-note{width:36px;height:23px;border-radius:4px;flex:none;background:var(--accent);
+    position:relative;box-shadow:inset 0 0 0 1px #ffffff2e,0 2px 4px -1px #0008;}
+  .chip-note::after{content:"";position:absolute;inset:3px;border-radius:2px;border:1px dashed #ffffff52;}
+  .chip-coin{width:28px;height:28px;border-radius:50%;flex:none;
+    background:radial-gradient(circle at 32% 28%,#fff6 0,#fff0 42%),var(--accent);
+    box-shadow:inset 0 0 0 1.5px #ffffff4d,inset 0 -3px 4px #0006,0 2px 4px #0007;}
+  .dstack{display:flex;flex-direction:column;line-height:1.05;min-width:0;}
+  .face{font-size:clamp(21px,6.4vw,27px);font-weight:700;color:var(--ink);white-space:nowrap;}
+  .face .nt{font-size:.55em;color:var(--ink-soft);font-weight:600;margin-right:1px;}
+  .sub{font-size:clamp(12px,3.6vw,14px);font-weight:600;color:var(--gold);white-space:nowrap;margin-top:1px;}
+  .sub.zero{color:#5a4d3a;}
+
+  /* 右半：五顆同款按鍵，只佔到中間偏右 */
+  .stepper{display:flex;align-items:center;gap:4px;flex:0 0 auto;height:100%;padding:7px 0;}
+  .btn{width:46px;height:100%;max-height:55px;border:none;border-radius:10px;cursor:pointer;
+    font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:21px;letter-spacing:-.01em;
+    background:var(--panel-2);color:var(--ink);display:flex;align-items:center;justify-content:center;
+    transition:transform .08s,background .15s;box-shadow:inset 0 0 0 1px var(--line);}
+  .btn:active{transform:scale(.9);background:#3a2d1d;}
+  .btn.plus{color:var(--gold);}
+  .btn.minus{color:var(--ink);}
+  .qty{width:55px;height:100%;max-height:55px;text-align:center;border:none;outline:none;
+    background:var(--panel-2);border-radius:10px;box-shadow:inset 0 0 0 1px var(--line);
+    font-family:"Space Grotesk",sans-serif;font-variant-numeric:tabular-nums;
+    font-size:26px;font-weight:700;color:var(--ink);transition:box-shadow .15s,background .15s;}
+  .qty:focus{box-shadow:inset 0 0 0 2px var(--gold);background:#241c12;}
+
+  /* ── 底部工具列 ── */
+  .footbar{flex:none;display:flex;gap:9px;padding:8px 0 calc(env(safe-area-inset-bottom) + 8px);}
+  .foot-btn{flex:1;height:46px;border-radius:12px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink-soft);font-family:"Noto Sans TC";font-size:14px;
+    font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:transform .08s,background .15s,color .15s;}
+  .foot-btn:active{transform:scale(.97);}
+  .foot-btn.reset:active{background:#3a1d1d;color:#ff9b8f;}
+  .foot-btn.reset.arm{background:#3a1d1d;color:#ff9b8f;box-shadow:inset 0 0 0 1.5px #7a3b34;}
+  .foot-btn.copy:active{background:#2d2a18;color:var(--gold);}
+  .foot-btn svg{width:16px;height:16px;}
+
+  .toast{position:fixed;left:50%;bottom:72px;transform:translateX(-50%) translateY(14px);
+    background:var(--gold);color:#1a1206;font-weight:700;font-size:14px;padding:9px 18px;
+    border-radius:999px;z-index:40;opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;box-shadow:0 8px 24px -6px #000a;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+
+  <div class="total">
+    <div class="amount" id="grand"><span class="cur">NT$</span><span id="grandNum">0</span></div>
+    <div class="breakdown">鈔票 <b id="noteCnt" class="num">0</b> 張<br>硬幣 <b id="coinCnt" class="num">0</b> 枚</div>
+  </div>
+
+  <div class="list">
+    <div id="notes"></div>
+    <div class="divider"></div>
+    <div id="coins"></div>
+  </div>
+
+  <div class="footbar">
+    <button class="foot-btn copy" id="copyBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>複製小結</button>
+    <button class="foot-btn reset" id="resetBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>全部歸零</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const NOTES=[2000,1000,500,200,100], COINS=[50,10,5,1], ALL=[...NOTES,...COINS];
+const counts={}; ALL.forEach(v=>counts[v]=0);
+const fmt=n=>n.toLocaleString('en-US');
+
+function makeRow(value,isCoin){
+  const row=document.createElement('div');
+  row.className='row'; row.style.setProperty('--accent',`var(--c-${value})`);
+  row.innerHTML=`
+    <div class="denom">
+      <div class="${isCoin?'chip-coin':'chip-note'}"></div>
+      <div class="dstack">
+        <span class="face"><span class="nt">$</span>${fmt(value)}</span>
+        <span class="sub zero" id="sub-${value}">$0</span>
+      </div>
+    </div>
+    <div class="stepper">
+      <button class="btn minus" data-step="-10" data-v="${value}" aria-label="減少10張">−10</button>
+      <button class="btn minus" data-step="-1"  data-v="${value}" aria-label="減少1張">−</button>
+      <input class="qty num" id="qty-${value}" inputmode="numeric" pattern="[0-9]*" value="0" aria-label="${value}元數量">
+      <button class="btn plus"  data-step="1"   data-v="${value}" aria-label="增加1張">+</button>
+      <button class="btn plus"  data-step="10"  data-v="${value}" aria-label="增加10張">+10</button>
+    </div>`;
+  return row;
+}
+NOTES.forEach(v=>document.getElementById('notes').appendChild(makeRow(v,false)));
+COINS.forEach(v=>document.getElementById('coins').appendChild(makeRow(v,true)));
+
+function setCount(value,n){
+  n=Math.max(0,Math.min(999999,Math.floor(n||0))); counts[value]=n;
+  const input=document.getElementById('qty-'+value);
+  if(document.activeElement!==input) input.value=n;
+  const sub=document.getElementById('sub-'+value);
+  sub.textContent='$'+fmt(value*n); sub.classList.toggle('zero',n===0);
+  render();
+}
+function render(){
+  let grand=0,noteCnt=0,coinCnt=0;
+  ALL.forEach(v=>grand+=v*counts[v]);
+  NOTES.forEach(v=>noteCnt+=counts[v]); COINS.forEach(v=>coinCnt+=counts[v]);
+  const gn=document.getElementById('grandNum');
+  if(gn.textContent!==fmt(grand)){const a=document.getElementById('grand');
+    a.classList.remove('pulse');void a.offsetWidth;a.classList.add('pulse');}
+  gn.textContent=fmt(grand);
+  document.getElementById('noteCnt').textContent=fmt(noteCnt);
+  document.getElementById('coinCnt').textContent=fmt(coinCnt);
+}
+document.body.addEventListener('click',e=>{
+  const b=e.target.closest('.btn'); if(!b) return;
+  const v=+b.dataset.v; setCount(v,counts[v]+parseInt(b.dataset.step,10));
+});
+ALL.forEach(v=>{
+  const input=document.getElementById('qty-'+v);
+  input.addEventListener('focus',()=>input.select());
+  input.addEventListener('input',()=>{
+    const c=input.value.replace(/[^0-9]/g,''); if(c!==input.value) input.value=c;
+    counts[v]=c===''?0:Math.min(999999,parseInt(c,10));
+    const sub=document.getElementById('sub-'+v);
+    sub.textContent='$'+fmt(v*counts[v]); sub.classList.toggle('zero',counts[v]===0); render();
+  });
+  input.addEventListener('blur',()=>setCount(v,counts[v]));
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();});
+});
+let toastT;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1600);}
+const resetBtn=document.getElementById('resetBtn');
+const resetLabel=resetBtn.innerHTML; let resetArmed=false,resetT;
+function disarmReset(){resetArmed=false;resetBtn.classList.remove('arm');resetBtn.innerHTML=resetLabel;}
+resetBtn.addEventListener('click',()=>{
+  if(ALL.every(v=>counts[v]===0)){toast('已經是空的囉');disarmReset();return;}
+  if(!resetArmed){
+    resetArmed=true;resetBtn.classList.add('arm');resetBtn.innerHTML='再按一次歸零';
+    clearTimeout(resetT);resetT=setTimeout(disarmReset,3000);return;
+  }
+  clearTimeout(resetT);disarmReset();
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  ALL.forEach(v=>setCount(v,0));
+  toast('已全部歸零 ✓');
+});
+document.getElementById('copyBtn').addEventListener('click',()=>{
+  let grand=0;const lines=[];
+  ALL.forEach(v=>{if(counts[v]>0){grand+=v*counts[v];lines.push(`$${fmt(v)} × ${counts[v]} = $${fmt(v*counts[v])}`);}});
+  const now=new Date();
+  const stamp=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const text=`🪙 錢櫃小結 ${stamp}\n${lines.join('\n')||'（空）'}\n────────\n總計 NT$${fmt(grand)}`;
+  const done=()=>toast('已複製到剪貼簿 ✓');
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallback(text,done));
+  else fallback(text,done);
+});
+function fallback(text,cb){const ta=document.createElement('textarea');ta.value=text;
+  ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');cb();}catch(e){toast('複製失敗');}document.body.removeChild(ta);}
+render();
+</script>
+</body>
+</html>
